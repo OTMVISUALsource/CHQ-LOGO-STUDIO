@@ -29,7 +29,7 @@ button:focus-visible,select:focus-visible{outline:2px solid var(--ac)}
 #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:14px}
 .c{background:var(--pn);border:1px solid var(--ln);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
 .lg{aspect-ratio:1/2;display:flex;align-items:center;justify-content:center;background:#fff1;border-radius:6px}
-.lg img{max-width:88%;max-height:90%;object-fit:contain}
+.lg img{max-width:84%;max-height:92%;object-fit:contain}
 .n{font-weight:600;font-size:13px;word-break:break-word}
 .m{font-size:12px;color:var(--mu);word-break:break-word}
 .k-ok{color:var(--ok)}.k-review{color:var(--rv)}.k-none{color:var(--no)}
@@ -50,6 +50,17 @@ button,.fb{display:inline-flex;align-items:center}
 .upb .ic{width:16px;height:16px;margin-right:6px}
 .rm{background:none;border:0;color:var(--mu);font-size:12px;padding:2px;justify-content:center}
 .rm .ic{width:14px;height:14px;margin-right:4px}
+.lg img{transform-origin:center}
+.stat{flex-direction:column;align-items:stretch!important;gap:10px}
+.nums{display:flex;gap:18px;flex-wrap:wrap;color:var(--mu)}.nums b{font-size:22px;color:#fff;margin-right:4px}
+.pbar{height:8px;background:#ffffff22;border-radius:8px;overflow:hidden}.pbar i{display:block;height:100%;background:var(--ok);transition:width .3s}
+.subs{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+.sb{padding:9px 14px}.sb span{margin-left:8px;padding:1px 9px;border-radius:99px;background:#ffffff22;font-size:12px}
+.sb.on{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:700}
+.col{flex-direction:column;align-items:stretch!important;gap:10px}.col p{margin:0;color:var(--mu)}
+.srow{display:flex;align-items:center;gap:8px}.srow input[type=range]{flex:1;min-width:0;accent-color:var(--ac)}.srow span{min-width:42px;text-align:right;font-size:13px}
+.chk{display:flex;align-items:center;gap:8px;font-size:14px}
+.tab{padding:11px 6px!important;font-size:13px}.tab .ic{margin-right:5px}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></symbol>
@@ -177,25 +188,58 @@ function kind(r){
 }
 const LBL={ok:'Matched',review:'Check this match',none:'No confident match'};
 const ic=n=>`<svg class="ic"><use href="#i-${n}"/></svg>`,KI={ok:'check',review:'alert',none:'x'};
-let tab='all';
+let tab='all',sub='todo',sf='all',GS=1,WO=false;
+const hasImg=r=>!!cur(r)&&kind(r)!=='none';
+const eff=r=>r.scale!=null?r.scale:(GS<1&&(!WO||(r.ar||0)>=2)?GS:1);
+const A=(i,im)=>{const r=R[i];if(!r)return;r.ar=(im.naturalWidth/im.naturalHeight)||1;im.style.transform=`scale(${eff(r)})`};
+function applyScales(){document.querySelectorAll('img[data-pv]').forEach(im=>{const r=R[+im.dataset.pv];if(r)im.style.transform=`scale(${eff(r)})`})}
+function updSliders(){document.querySelectorAll('input[data-sc]').forEach(el=>{const v=Math.round(eff(R[+el.dataset.sc])*100);el.value=v;el.parentNode.querySelector('[data-scv]').textContent=v+'%'})}
+function frameHtml(r,i,show,c){return show?`<div class="lg"><img data-pv="${i}" style="transform:scale(${eff(r)})" loading="lazy" referrerpolicy="no-referrer" src="${esc(c.u)}" alt="" onload="A(${i},this)" onerror="this.remove()"></div>`:`<div class="lg empty">${ic('image')}No logo yet</div>`}
+function cardHtml(r,i,k){
+ const c=cur(r);
+ const sel=(!r.logo&&!r.up&&r.cands.length>1||(!r.logo&&!r.up&&k!=='ok'&&r.cands.length))?`<select data-i="${i}" aria-label="Choose logo">${(k==='none'&&!r.chosen?'<option value="-1">Pick a logo…</option>':'')}${r.cands.map((o,j)=>`<option value="${j}"${j===r.sel&&(k!=='none'||r.chosen)?' selected':''}>${esc(o.c.n)} (${o.c.s})</option>`).join('')}</select>`:'';
+ const show=c&&(k!=='none'||r.chosen);
+ const opts=r.deep&&r.deep.length&&!r.logo&&!r.up?'<div class="opts">'+r.deep.map((o,j)=>`<button class="op${r.pick&&r.pick.u===o.u?' on':''}" data-i="${i}" data-j="${j}" title="${esc(o.n+' ('+o.s+')')}"><img loading="lazy" referrerpolicy="no-referrer" src="${esc(o.u)}" alt="" onerror="this.parentNode.remove()">${o.t}</button>`).join('')+'</div>':'';
+ const lab=r.up?'Your upload':r.chosen?'Your pick':LBL[k];
+ return`<div class="c" data-i="${i}">${frameHtml(r,i,show,c)}<div class="n">${esc(r.name)}</div><div class="m k-${k}">${ic(KI[k])}<span>${lab}${show&&!r.logo?': '+esc(c.n):''}</span></div>${sel}${opts}<button class="upb" data-up="${i}">${ic('up')}${show?'Replace logo':'Upload logo'}</button>${r.up?`<button class="rm" data-rm="${i}">${ic('trash')}Remove upload</button>`:''}</div>`;
+}
+const tip=(i,t)=>`<p class="tip">${ic(i)}${t}</p>`;
 function render(){
  const cnt={all:R.length,ok:0,review:0,none:0};R.forEach(r=>cnt[kind(r)]++);
- $('tabs').innerHTML=`<button class="tab${tab==='all'?' on':''}" data-t="all">${ic('grid')}All channels<span>${R.length}</span></button><button class="tab${tab==='need'?' on':''}" data-t="need">${ic('alert')}Needs attention<span>${cnt.review+cnt.none}</span></button>`;
+ const need=R.filter(r=>r.need),todo=need.filter(r=>kind(r)!=='ok'),done=need.filter(r=>kind(r)==='ok');
+ $('tabs').innerHTML=[['all','grid','All channels',R.length],['need','alert','Needs attention',todo.length],['scale','image','Scale',''] ].map(([t,i,l,n])=>`<button class="tab${tab===t?' on':''}" data-t="${t}">${ic(i)}${l}${n!==''?`<span>${n}</span>`:''}</button>`).join('');
  $('chips').style.display=tab==='all'?'flex':'none';
  $('chips').innerHTML=[['all','All'],['ok','Matched'],['review','Check'],['none','Missing']].map(([k,l])=>`<button class="chip${flt===k?' on':''}" data-f="${k}">${l} ${cnt[k]}</button>`).join('');
- const rows=R.map((r,i)=>({r,i,k:kind(r)})).filter(o=>tab==='need'?(o.k!=='ok'||o.r.touched):(flt==='all'||o.k===flt));
- let html=tab==='need'?`<p class="tip">${ic('up')}Upload your own logo for any channel below (PNG, JPG, SVG or WebP), or drop an image onto its card. It is resized to match the rest of your files.</p>`:'';
- if(!rows.length)html+=`<p class="tip">${ic('check')}${tab==='need'?'Every channel has a logo.':'Nothing to show here.'}</p>`;
- html+=rows.map(({r,i,k})=>{
-  const c=cur(r);
-  const sel=(!r.logo&&!r.up&&r.cands.length>1||(!r.logo&&!r.up&&k!=='ok'&&r.cands.length))?`<select data-i="${i}" aria-label="Choose logo">${(k==='none'&&!r.chosen?'<option value="-1">Pick a logo…</option>':'')}${r.cands.map((o,j)=>`<option value="${j}"${j===r.sel&&(k!=='none'||r.chosen)?' selected':''}>${esc(o.c.n)} (${o.c.s})</option>`).join('')}</select>`:'';
-  const show=c&&(k!=='none'||r.chosen);
-  const opts=r.deep&&r.deep.length&&!r.logo&&!r.up?'<div class="opts">'+r.deep.map((o,j)=>`<button class="op${r.pick&&r.pick.u===o.u?' on':''}" data-i="${i}" data-j="${j}" title="${esc(o.n+' ('+o.s+')')}"><img loading="lazy" referrerpolicy="no-referrer" src="${esc(o.u)}" alt="" onerror="this.parentNode.remove()">${o.t}</button>`).join('')+'</div>':'';
-  const frame=show?`<div class="lg"><img loading="lazy" referrerpolicy="no-referrer" src="${esc(c.u)}" alt="" onerror="this.remove()"></div>`:`<div class="lg empty">${ic('image')}No logo yet</div>`;
-  const lab=r.up?'Your upload':r.chosen?'Your pick':LBL[k];
-  return`<div class="c" data-i="${i}">${frame}<div class="n">${esc(r.name)}</div><div class="m k-${k}">${ic(KI[k])}<span>${lab}${show&&!r.logo?': '+esc(c.n):''}</span></div>${sel}${opts}<button class="upb" data-up="${i}">${ic('up')}${show?'Replace logo':'Upload logo'}</button>${r.up?`<button class="rm" data-rm="${i}">${ic('trash')}Remove upload</button>`:''}</div>`;
- }).join('');
+ $('zip').innerHTML=ic('down')+(tab==='need'?`Download updated ZIP (${done.length})`:'Download ZIP');
+ let html='';
+ if(tab==='need'){
+  const tot=need.length,pct=tot?Math.round(done.length/tot*100):0;
+  html+=`<div class="tip stat"><div class="nums"><span><b>${done.length}</b>updated</span><span><b>${todo.length}</b>left to fix</span><span><b>${tot}</b>total</span></div><div class="pbar"><i style="width:${pct}%"></i></div></div>`;
+  html+=`<div class="subs"><button class="sb${sub==='todo'?' on':''}" data-s="todo">${ic('alert')}To fix<span>${todo.length}</span></button><button class="sb${sub==='done'?' on':''}" data-s="done">${ic('check')}Updated<span>${done.length}</span></button></div>`;
+  const rows=sub==='todo'?todo:done;
+  if(sub==='todo'&&rows.length)html+=tip('up','Upload your own logo for any channel below (PNG, JPG, SVG or WebP), or drop an image onto its card. Fixed channels move to the Updated list and into the updated ZIP.');
+  if(!rows.length)html+=sub==='todo'?tip('check','Everything is fixed. Nothing left to fix.'):tip('image','Nothing updated yet. Upload or pick a logo on the To fix list and it will appear here.');
+  html+=rows.map(r=>cardHtml(r,R.indexOf(r),kind(r))).join('');
+ }else if(tab==='scale'){
+  const all=R.map((r,i)=>({r,i})).filter(o=>hasImg(o.r));
+  const nW=all.filter(o=>(o.r.ar||0)>=2).length,nA=all.filter(o=>o.r.scale!=null).length,gp=Math.round(GS*100);
+  html+=`<div class="tip col"><b>Scale logos</b><p>Make logos sit smaller inside the frame. Wide logos benefit most. 100% is the normal size. The ZIP uses exactly what you see here.</p><div class="srow">${ic('image')}<input type="range" id="gs" min="40" max="100" step="5" value="${gp}" aria-label="Scale all logos"><span id="gsv">${gp}%</span></div><label class="chk"><input type="checkbox" id="wo"${WO?' checked':''}>Only apply to wide logos (2:1 or wider)</label><div><button class="fb" data-gsr="1">Reset all scaling</button></div></div>`;
+  html+=`<div class="subs">${[['all','All',all.length],['wide','Wide',nW],['adj','Adjusted',nA]].map(([k,l,n])=>`<button class="chip${sf===k?' on':''}" data-sf="${k}">${l} ${n}</button>`).join('')}</div>`;
+  const rows=all.filter(o=>sf==='all'||(sf==='wide'&&(o.r.ar||0)>=2)||(sf==='adj'&&o.r.scale!=null));
+  if(!rows.length)html+=tip('image',all.length?'No logos in this view.':'No logos yet. Run a search first.');
+  html+=rows.map(({r,i})=>{const v=Math.round(eff(r)*100);return`<div class="c" data-i="${i}">${frameHtml(r,i,true,cur(r))}<div class="n">${esc(r.name)}</div><div class="srow"><input type="range" data-sc="${i}" min="40" max="100" step="5" value="${v}" aria-label="Scale ${esc(r.name)}"><span data-scv="${i}">${v}%</span></div><button class="rm" data-scr="${i}">Reset</button></div>`}).join('');
+ }else{
+  html+=R.map((r,i)=>({r,i,k:kind(r)})).filter(o=>flt==='all'||o.k===flt).map(o=>cardHtml(o.r,o.i,o.k)).join('');
+  if(!html)html=tip('image','Nothing to show here.');
+ }
  $('grid').innerHTML=html;
+}
+async function probe(){
+ const todo=R.filter(r=>hasImg(r)&&r.ar==null);if(!todo.length)return;
+ let i=0;$('st').textContent='Measuring logos…';
+ const w=async()=>{while(i<todo.length){const r=todo[i++];await new Promise(res=>{const im=new Image();im.onload=()=>{r.ar=(im.naturalWidth/im.naturalHeight)||1;res()};im.onerror=()=>{r.ar=1;res()};im.src=cur(r).u})}};
+ await Promise.all(Array.from({length:8},w));
+ $('st').textContent='';if(tab==='scale')render();
 }
 $('run').onclick=async()=>{
  const items=parseList($('in').value);
@@ -204,38 +248,48 @@ $('run').onclick=async()=>{
  $('st').textContent='Matching '+items.length+' channels…';
  await new Promise(r=>setTimeout(r,30));
  R=items.map(it=>({...it,cands:it.logo?[]:find(P(it.q)),sel:0,chosen:false}));
+ R.forEach(r=>r.need=kind(r)!=='ok');
  const k={ok:0,review:0,none:0};R.forEach(r=>k[kind(r)]++);
  $('st').textContent=`${R.length} channels: ${k.ok} matched, ${k.review} to check, ${k.none} without a confident match.`;
- $('bar').style.display='block';flt='all';tab='all';render();
+ $('bar').style.display='block';flt='all';tab='all';sub='todo';sf='all';render();
 };
 $('f').onchange=e=>{const f=e.target.files[0];if(f)f.text().then(t=>{$('in').value=t;$('run').click()})};
 $('chips').onclick=e=>{const b=e.target.closest('[data-f]');if(b){flt=b.dataset.f;render()}};
 $('grid').onchange=e=>{const s=e.target.closest('select');if(!s)return;const v=+s.value;if(v<0)return;const r=R[s.dataset.i];r.sel=v;r.pick=null;r.chosen=true;render()};
 
 const loadImg=u=>new Promise((res,rej)=>{const im=new Image();im.crossOrigin='anonymous';im.referrerPolicy='no-referrer';im.onload=()=>res(im);im.onerror=()=>rej();im.src=u});
-async function toPng(u,w,h){
+async function toPng(u,w,h,r){
  let im;try{im=await loadImg(u)}catch{im=await loadImg('https://wsrv.nl/?output=png&url='+encodeURIComponent(u))}
  const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');
  if($('bg').checked){x.fillStyle='#fff';x.fillRect(0,0,w,h)}
- const iw=im.naturalWidth||300,ih=im.naturalHeight||150,pad=Math.round(w*.08),s=Math.min((w-2*pad)/iw,(h-2*pad)/ih);
+ const iw=im.naturalWidth||300,ih=im.naturalHeight||150,pad=Math.round(w*.08),s=Math.min((w-2*pad)/iw,(h-2*pad)/ih)*(r&&r.scale!=null?r.scale:(GS<1&&(!WO||iw/ih>=2)?GS:1));
  x.imageSmoothingQuality='high';x.drawImage(im,(w-iw*s)/2,(h-ih*s)/2,iw*s,ih*s);
  return new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(),'image/png'));
 }
+$('grid').addEventListener('input',e=>{const t=e.target;
+ if(t.id==='gs'){GS=t.value/100;$('gsv').textContent=t.value+'%';applyScales();updSliders()}
+ else if(t.dataset&&t.dataset.sc!==undefined){R[+t.dataset.sc].scale=t.value/100;t.parentNode.querySelector('[data-scv]').textContent=t.value+'%';applyScales()}
+});
+$('grid').addEventListener('change',e=>{if(e.target.id==='wo'){WO=e.target.checked;applyScales();updSliders()}});
 let upIdx=-1;
 function setUpload(i,f){
  if(!f)return;
  if(!/^image\//.test(f.type)){$('st').textContent='That file is not an image. Use PNG, JPG, SVG or WebP.';return}
  const r=R[i];if(r.up)URL.revokeObjectURL(r.up.u);
  r.up={u:URL.createObjectURL(f),n:f.name,s:'upload'};r.pick=null;r.touched=true;render();
- $('st').textContent='Added your image for '+r.name+'. It will be sized to match the rest in the ZIP.';
+ const left=R.filter(x=>x.need&&kind(x)!=='ok').length;$('st').textContent='Added your image for '+r.name+'.'+(r.need?' '+left+' left to fix.':'');
 }
 $('upf').onchange=e=>{setUpload(upIdx,e.target.files[0]);e.target.value=''};
-$('tabs').onclick=e=>{const b=e.target.closest('[data-t]');if(b){tab=b.dataset.t;render()}};
+$('tabs').onclick=e=>{const b=e.target.closest('[data-t]');if(b){tab=b.dataset.t;render();if(tab==='scale')probe()}};
 $('grid').addEventListener('dragover',e=>{const c=e.target.closest('.c');if(c){e.preventDefault();c.classList.add('drag')}});
 $('grid').addEventListener('dragleave',e=>{const c=e.target.closest('.c');if(c)c.classList.remove('drag')});
 $('grid').addEventListener('drop',e=>{const c=e.target.closest('.c');if(!c)return;e.preventDefault();c.classList.remove('drag');setUpload(+c.dataset.i,e.dataTransfer.files[0])});
 $('grid').onclick=e=>{
  const u=e.target.closest('[data-up]');if(u){upIdx=+u.dataset.up;$('upf').click();return}
+ const sb=e.target.closest('[data-s]');if(sb){sub=sb.dataset.s;render();return}
+ const sfb=e.target.closest('[data-sf]');if(sfb){sf=sfb.dataset.sf;render();return}
+ const gr=e.target.closest('[data-gsr]');if(gr){GS=1;WO=false;R.forEach(r=>{delete r.scale});render();return}
+ const sr=e.target.closest('[data-scr]');if(sr){delete R[+sr.dataset.scr].scale;applyScales();updSliders();return}
  const m=e.target.closest('[data-rm]');if(m){const r=R[+m.dataset.rm];URL.revokeObjectURL(r.up.u);r.up=null;render();return}
  const b=e.target.closest('.op');if(!b)return;const r=R[b.dataset.i],o=r.deep[b.dataset.j];if(r.pick&&r.pick.u===o.u){r.pick=null;r.chosen=false}else{r.pick={u:o.u,n:o.n,s:o.s};r.chosen=true}render()};
 const tier=x=>x>=.85?'Known':x>=.6?'Close':'Possible';
@@ -262,8 +316,9 @@ $('deep').onclick=async()=>{
 };
 const CCN={US:'United States',GB:'United Kingdom',FR:'France',DE:'Germany',IT:'Italy',ES:'Spain',PT:'Portugal',PL:'Poland',NL:'Netherlands',DK:'Denmark',SE:'Sweden',NO:'Norway',TR:'Turkey',GR:'Greece',CY:'Cyprus',IL:'Israel',RU:'Russia',RS:'Serbia',HR:'Croatia',BG:'Bulgaria',RO:'Romania',CZ:'Czechia',SK:'Slovakia',CA:'Canada',MX:'Mexico',BR:'Brazil',AR:'Argentina',AE:'UAE',QA:'Qatar',AU:'Australia',NZ:'New Zealand',IN:'India',PK:'Pakistan',BD:'Bangladesh',HU:'Hungary',IE:'Ireland',BA:'Bosnia',MY:'Malaysia',CL:'Chile',UY:'Uruguay',CO:'Colombia',AT:'Austria',CH:'Switzerland',BE:'Belgium',ZA:'South Africa'};
 $('zip').onclick=async()=>{
- const list=R.map(r=>({r,c:cur(r),k:kind(r)})).filter(o=>o.c&&(o.k==='ok'||o.k==='review'));
- if(!list.length){$('st').textContent='No logos to download yet.';return}
+ const upd=tab==='need';
+ const list=R.map(r=>({r,c:cur(r),k:kind(r)})).filter(o=>o.c&&(upd?(o.r.need&&o.k==='ok'):(o.k==='ok'||o.k==='review')));
+ if(!list.length){$('st').textContent=upd?'Nothing updated yet. Upload or pick a logo for a channel on the To fix list first.':'No logos to download yet.';return}
  if(!window.JSZip){$('st').textContent='ZIP library could not load. Check your internet connection.';return}
  $('done').innerHTML='';
  const [w,h]=$('sz').value.split('x').map(Number),z=new JSZip(),man=[['channel','file','matched_name','source','logo_url']],skipped=[];let done=0,i=0,added=0;
@@ -272,7 +327,7 @@ $('zip').onclick=async()=>{
   const o=list[i++],r=o.r;
   const urls=[o.c.u,...(r.logo||r.pick||r.up?[]:r.cands.filter((x,j)=>j!==r.sel&&x.s>=.85&&x.c.u!==o.c.u).map(x=>x.c.u))];
   let b=null,used_u=o.c.u;
-  for(const u of urls){try{b=await toPng(u,w,h);used_u=u;break}catch{}}
+  for(const u of urls){try{b=await toPng(u,w,h,r);used_u=u;break}catch{}}
   if(b){
    const folder=CCN[P(r.q).cc||o.c.cc]||'Other';
    const base=r.name.replace(/[\\/:*?"<>|]/g,'-').replace(/[. ]+$/,'')||'channel';let fn=base,k=1;
@@ -282,14 +337,14 @@ $('zip').onclick=async()=>{
   $('st').textContent=`Rendering ${++done} of ${list.length}…`;
  }};
  await Promise.all(Array.from({length:6},work));
- R.filter(r=>!list.some(o=>o.r===r)).forEach(r=>skipped.push(r.name));
+ (upd?R.filter(r=>r.need):R).filter(r=>!list.some(o=>o.r===r)).forEach(r=>skipped.push(r.name));
  if(!added){$('st').textContent='No logo images could be downloaded. Check your connection and try again.';return}
  z.file('manifest.csv',man.map(r=>r.map(q).join(',')).join('\n'));
  $('st').textContent='Building ZIP…';
- const blob=await z.generateAsync({type:'blob',compression:'STORE'}),name=`CHQ-logos-${w}x${h}.zip`,url=URL.createObjectURL(blob);
+ const blob=await z.generateAsync({type:'blob',compression:'STORE'}),name=`CHQ-${upd?'updated-':''}logos-${w}x${h}.zip`,url=URL.createObjectURL(blob);
  const f=new File([blob],name,{type:'application/zip'}),canShare=!!(navigator.canShare&&navigator.canShare({files:[f]}));
  $('st').textContent='';
- $('done').innerHTML=`<div class="box"><b>${added} logos ready</b> in ${w}×${h}, sorted into folders by country. Only channels with an image are included.<div class="row"><a class="fb go" href="${url}" download="${esc(name)}">${ic('down')}Save ZIP</a>${canShare?`<button id="sh" class="fb">${ic('share')}Share ZIP</button>`:''}</div>${skipped.length?`<details><summary>${skipped.length} channels left out (no image)</summary><p class="m">${esc(skipped.join(', '))}</p></details>`:''}</div>`;
+ $('done').innerHTML=`<div class="box"><b>${added} ${upd?'updated ':''}logos ready</b> in ${w}×${h}, sorted into folders by country. Only channels with an image are included.<div class="row"><a class="fb go" href="${url}" download="${esc(name)}">${ic('down')}Save ZIP</a>${canShare?`<button id="sh" class="fb">${ic('share')}Share ZIP</button>`:''}</div>${skipped.length?`<details><summary>${skipped.length} channels ${upd?'still to fix':'left out (no image)'}</summary><p class="m">${esc(skipped.join(', '))}</p></details>`:''}</div>`;
  if(canShare)$('sh').onclick=()=>navigator.share({files:[f],title:name}).catch(()=>{});
  $('done').scrollIntoView({behavior:'smooth',block:'center'});
 };
