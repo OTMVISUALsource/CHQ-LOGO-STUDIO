@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CHQ Logo Studio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{--bg:#121214;--pn:#1e1e21;--ln:#34363b;--fg:#f4f5f7;--mu:#9ca3af;--ac:#2f74e6;--ok:#5bd28c;--rv:#f0a04b;--no:#8a94a3}
+*{box-sizing:border-box}
+html{min-height:100%;background:linear-gradient(104deg,#2d78ea 0%,#15439b 8%,#2e2e30 8.2%,#1b1b1d 50%,#2e2e30 91.8%,#15439b 92%,#2d78ea 100%) fixed}
+body{margin:0;color:var(--fg);font:15px/1.45 "Avenir Next","Segoe UI",system-ui,sans-serif;padding:20px 16px 60px;max-width:1080px;margin-inline:auto}
+.brand{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.orb{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#2c2c2f,#000 70%);box-shadow:0 6px 18px #0009,inset 0 0 0 1px #ffffff14;font:900 21px/1 "Arial Black",Impact,sans-serif;color:#fff;text-shadow:0 2px 3px #000}
+h1{font:800 28px/1.1 "Avenir Next","Segoe UI",system-ui,sans-serif;margin:0}
+.sub{color:#c3c8d0;margin:0 0 20px}
+.box{background:#1e1e21f2;border:1px solid var(--ln);border-radius:10px;padding:14px}
+textarea{width:100%;height:150px;resize:vertical;background:var(--bg);color:var(--fg);border:1px dashed var(--ln);border-radius:8px;padding:12px;font:inherit}
+textarea:focus{outline:2px solid var(--ac);border-style:solid}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+button,select,.fb{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--ln);border-radius:8px;padding:10px 14px;cursor:pointer}
+button:focus-visible,select:focus-visible{outline:2px solid var(--ac)}
+.go{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:700}
+.sp{flex:1}
+#st{color:var(--mu);margin:14px 2px;min-height:22px}
+#bar{display:none;margin-top:6px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:6px 12px;border-radius:99px;font-size:13px}
+.chip.on{background:var(--ac);color:#fff;border-color:var(--ac);font-weight:700}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:14px}
+.c{background:var(--pn);border:1px solid var(--ln);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.lg{aspect-ratio:1/2;display:flex;align-items:center;justify-content:center;background:#fff1;border-radius:6px}
+.lg img{max-width:88%;max-height:90%;object-fit:contain}
+.n{font-weight:600;font-size:13px;word-break:break-word}
+.m{font-size:12px;color:var(--mu);word-break:break-word}
+.k-ok{color:var(--ok)}.k-review{color:var(--rv)}.k-none{color:var(--no)}
+.c select{padding:6px;font-size:12px;width:100%}
+</style></head><body>
+<div class="brand"><span class="orb" aria-hidden="true">CHQ</span><h1>Logo Studio</h1></div>
+<p class="sub">Drop your channel list. Get every matching logo in one ZIP, already sized.</p>
+
+<div class="box">
+<textarea id="in" placeholder="Paste your channels here, one per line or separated by commas&#10;&#10;ESPN USA, Sky Sports Main Event UK, Canal+ Sport France, TF1 France"></textarea>
+<div class="row">
+<button class="go" id="run">Find logos</button>
+<label class="fb">Load playlist (.m3u)<input id="f" type="file" accept=".m3u,.m3u8,.txt" hidden></label>
+</div>
+</div>
+<div id="st"></div>
+
+<div id="bar" class="box">
+<div class="row" style="margin-top:0">
+<div class="chips" id="chips"></div><span class="sp"></span>
+<select id="sz" aria-label="Image size"><option value="150x300">150 × 300</option><option value="300x600" selected>300 × 600</option><option value="450x900">450 × 900</option><option value="600x1200">600 × 1200</option></select>
+<label class="fb"><input type="checkbox" id="bg"> White background</label>
+<button class="go" id="zip">Download ZIP</button>
+</div>
+</div>
+<div id="grid"></div>
+
+<script>
+const IPTV='https://iptv-org.github.io/api/',TVL='https://data.jsdelivr.com/v1/package/gh/tv-logo/tv-logos@main/flat',TVLC='https://cdn.jsdelivr.net/gh/tv-logo/tv-logos@main';
+const CN={us:'US',usa:'US','united states':'US',america:'US',uk:'GB',gb:'GB','united kingdom':'GB',fr:'FR',france:'FR',de:'DE',germany:'DE',it:'IT',italy:'IT',es:'ES',spain:'ES',pt:'PT',portugal:'PT',pl:'PL',poland:'PL',nl:'NL',netherland:'NL',netherlands:'NL',dk:'DK',denmark:'DK',se:'SE',sw:'SE',sweden:'SE',norway:'NO',tr:'TR',turkey:'TR',gr:'GR',greece:'GR',cy:'CY',cyprus:'CY',il:'IL',israel:'IL',ru:'RU',russia:'RU',rs:'RS',serbia:'RS',hr:'HR',croatia:'HR',bg:'BG',bulgaria:'BG',ro:'RO',romania:'RO',cz:'CZ','czech republic':'CZ',czechia:'CZ',sk:'SK',slovakia:'SK',ca:'CA',canada:'CA',mx:'MX',mexico:'MX',br:'BR',brasil:'BR',brazil:'BR',ar:'AR',argentina:'AR',ae:'AE',uae:'AE','united arab emirates':'AE',qa:'QA',qatar:'QA',au:'AU',australia:'AU',nz:'NZ','new zealand':'NZ',in:'IN',india:'IN',pk:'PK',bd:'BD',hu:'HU',hungary:'HU',ie:'IE',ireland:'IE',bih:'BA',ba:'BA',malaysia:'MY',cl:'CL',chile:'CL',uy:'UY',uruguay:'UY',columbia:'CO',colombia:'CO',austria:'AT',switzerland:'CH',belgium:'BE','south africa':'ZA'};
+const NOISE=new Set(['hd','fhd','uhd','sd','channel','the']);
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const isNum=x=>/^\d+$/.test(x);
+let DB=null,TOK={},R=[],flt='all';
+
+function P(raw,hint){
+ const orig=raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/&/g,' and ').replace(/\+/g,' plus ').replace(/([a-z])(\d)/g,'$1 $2').replace(/(\d)([a-z])/g,'$1 $2').split(/[^a-z0-9]+/).filter(Boolean);
+ let t=orig.slice(),cc=hint||null;
+ if(t.length>1){
+  const l2=t.slice(-2).join(' '),l1=t[t.length-1];
+  if(t.length>2&&CN[l2]){cc=cc||CN[l2];t=t.slice(0,-2)}else if(CN[l1]){cc=cc||CN[l1];t=t.slice(0,-1)}
+ }
+ const f=t.filter(x=>!NOISE.has(x));
+ return{t:f.length?f:t,cc};
+}
+function score(q,c){
+ const cs=new Set(c.t);let sh=0;for(const x of q.t)if(cs.has(x))sh++;
+ let s=2*sh/((q.t.length+c.t.length)||1);
+ if(q.t.filter(isNum).join()!==c.t.filter(isNum).join())s*=.35;
+ if(q.cc&&c.cc)s=q.cc===c.cc?Math.min(1,s+.12):s*.55;
+ return s;
+}
+async function loadDB(){
+ if(DB)return;
+ $('st').textContent='Loading logo libraries…';
+ const j=u=>fetch(u).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()});
+ const [a,b,c]=await Promise.allSettled([j(IPTV+'channels.json'),j(IPTV+'logos.json'),j(TVL)]);
+ DB=[];const add=(n,disp,cc,u,s)=>{const p=P(n,cc);if(p.t.length)DB.push({n:disp,t:p.t,cc:p.cc,u,s})};
+ let ok=[];
+ if(a.status==='fulfilled'&&b.status==='fulfilled'){
+  const best={};b.value.forEach(l=>{const ar=(l.width||0)*(l.height||0);if(!best[l.channel]||ar>best[l.channel].ar)best[l.channel]={u:l.url,ar}});
+  a.value.forEach(x=>{if(x.closed)return;const u=best[x.id]?best[x.id].u:x.logo;if(!u)return;add(x.name,x.name,x.country,u,'iptv-org');(x.alt_names||[]).forEach(n=>add(n,x.name,x.country,u,'iptv-org'))});
+  ok.push('iptv-org');
+ }
+ if(c.status==='fulfilled'){
+  (c.value.files||[]).forEach(f=>{
+   if(!/^\/(countries|misc)\//i.test(f.name)||!/\.(png|svg)$/i.test(f.name))return;
+   const seg=f.name.split('/'),file=seg[seg.length-1].replace(/\.(png|svg)$/i,''),fold=seg[1]==='countries'?seg[2].replace(/-/g,' '):'';
+   const nm=file.replace(/-/g,' ').replace(/\s(19|20)\d\d$/,'');
+   add(nm,nm.replace(/\b\w/g,m=>m.toUpperCase()),CN[fold]||null,TVLC+f.name,'tv-logos');
+  });
+  ok.push('tv-logos');
+ }
+ if(!ok.length)throw new Error('No logo library could be reached. Open this file in a browser with internet access.');
+ DB.forEach(c=>c.t.forEach(x=>(TOK[x]=TOK[x]||[]).push(c)));
+ $('st').textContent='Libraries ready: '+ok.join(' + ')+' ('+DB.length.toLocaleString()+' logo names).';
+}
+function find(q){
+ if(!q.t.length)return[];
+ let cand=new Set(),small=q.t.filter(x=>TOK[x]&&TOK[x].length<5000);
+ (small.length?small:q.t.filter(x=>TOK[x])).forEach(x=>TOK[x].forEach(c=>cand.add(c)));
+ const sc=[];cand.forEach(c=>{const s=score(q,c);if(s>=.3)sc.push({c,s})});
+ sc.sort((a,b)=>b.s-a.s);
+ const seen=new Set(),out=[];
+ for(const o of sc){if(seen.has(o.c.u))continue;seen.add(o.c.u);out.push(o);if(out.length>=5)break}
+ return out;
+}
+function parseList(txt){
+ let items=[];
+ if(txt.includes('#EXTINF')){
+  txt.split('\n').filter(l=>l.startsWith('#EXTINF')).forEach(l=>{const n=l.slice(l.lastIndexOf(',')+1).trim();if(n)items.push({name:n,logo:(l.match(/tvg-logo="([^"]*)"/)||[])[1]||''})});
+ }else{
+  txt.replace(/\([^)]*\)/g,'').split(/[\n,;]+/).forEach(s=>{
+   s=s.replace(/…|\.\.\./g,'').trim();if(!s||/^#{2,}/.test(s))return;
+   const m=s.match(/^(.*?)(\d+)\s*[–-]\s*(\d+)(.*)$/);
+   if(m&&+m[3]>+m[2]&&+m[3]-+m[2]<=30){for(let n=+m[2];n<=+m[3];n++)items.push({name:(m[1]+n+m[4]).replace(/\s+/g,' ').trim(),logo:''})}
+   else items.push({name:s.replace(/\s+/g,' '),logo:''});
+  });
+ }
+ const seen=new Set();return items.filter(i=>{const k=i.name.toLowerCase();if(seen.has(k))return false;seen.add(k);return true});
+}
+const cur=r=>r.logo?{u:r.logo,n:'Logo from your playlist',s:'playlist'}:(r.cands[r.sel]?r.cands[r.sel].c:null);
+function kind(r){
+ if(r.logo||r.chosen)return'ok';
+ const t=r.cands[0];if(!t)return'none';
+ return t.s>=.85?'ok':t.s>=.6?'review':'none';
+}
+const LBL={ok:'Matched',review:'Check this match',none:'No confident match'};
+function render(){
+ const cnt={all:R.length,ok:0,review:0,none:0};R.forEach(r=>cnt[kind(r)]++);
+ $('chips').innerHTML=[['all','All'],['ok','Matched'],['review','Check'],['none','Missing']].map(([k,l])=>`<button class="chip${flt===k?' on':''}" data-f="${k}">${l} ${cnt[k]}</button>`).join('');
+ $('grid').innerHTML=R.map((r,i)=>({r,i,k:kind(r)})).filter(o=>flt==='all'||o.k===flt).map(({r,i,k})=>{
+  const c=cur(r),pick=!r.logo&&r.cands.length&&k!=='ok'||(!r.logo&&r.chosen);
+  const sel=(!r.logo&&r.cands.length>1||(!r.logo&&k!=='ok'&&r.cands.length))?`<select data-i="${i}" aria-label="Choose logo">${(k==='none'&&!r.chosen?'<option value="-1">Pick a logo…</option>':'')}${r.cands.map((o,j)=>`<option value="${j}"${j===r.sel&&(k!=='none'||r.chosen)?' selected':''}>${esc(o.c.n)} (${o.c.s})</option>`).join('')}</select>`:'';
+  const show=c&&(k!=='none'||r.chosen);
+  return`<div class="c"><div class="lg">${show?`<img loading="lazy" referrerpolicy="no-referrer" src="${esc(c.u)}" alt="" onerror="this.remove()">`:''}</div><div class="n">${esc(r.name)}</div><div class="m k-${k}">${r.chosen?'Your pick':LBL[k]}${show&&!r.logo?': '+esc(c.n):''}</div>${sel}</div>`;
+ }).join('');
+}
+$('run').onclick=async()=>{
+ const items=parseList($('in').value);
+ if(!items.length){$('st').textContent='Add some channel names first.';return}
+ try{await loadDB()}catch(e){$('st').textContent=e.message;return}
+ $('st').textContent='Matching '+items.length+' channels…';
+ await new Promise(r=>setTimeout(r,30));
+ R=items.map(it=>({...it,cands:it.logo?[]:find(P(it.name)),sel:0,chosen:false}));
+ const k={ok:0,review:0,none:0};R.forEach(r=>k[kind(r)]++);
+ $('st').textContent=`${R.length} channels: ${k.ok} matched, ${k.review} to check, ${k.none} without a confident match.`;
+ $('bar').style.display='block';flt='all';render();
+};
+$('f').onchange=e=>{const f=e.target.files[0];if(f)f.text().then(t=>{$('in').value=t;$('run').click()})};
+$('chips').onclick=e=>{const b=e.target.closest('[data-f]');if(b){flt=b.dataset.f;render()}};
+$('grid').onchange=e=>{const s=e.target.closest('select');if(!s)return;const v=+s.value;if(v<0)return;const r=R[s.dataset.i];r.sel=v;r.chosen=true;render()};
+
+const loadImg=u=>new Promise((res,rej)=>{const im=new Image();im.crossOrigin='anonymous';im.referrerPolicy='no-referrer';im.onload=()=>res(im);im.onerror=()=>rej();im.src=u});
+async function toPng(u,w,h){
+ let im;try{im=await loadImg(u)}catch{im=await loadImg('https://wsrv.nl/?output=png&url='+encodeURIComponent(u))}
+ const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');
+ if($('bg').checked){x.fillStyle='#fff';x.fillRect(0,0,w,h)}
+ const iw=im.naturalWidth||300,ih=im.naturalHeight||150,pad=Math.round(w*.08),s=Math.min((w-2*pad)/iw,(h-2*pad)/ih);
+ x.imageSmoothingQuality='high';x.drawImage(im,(w-iw*s)/2,(h-ih*s)/2,iw*s,ih*s);
+ return new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(),'image/png'));
+}
+$('zip').onclick=async()=>{
+ const list=R.map(r=>({r,c:cur(r),k:kind(r)})).filter(o=>o.c&&(o.k==='ok'||o.k==='review'));
+ if(!list.length){$('st').textContent='No logos to download yet.';return}
+ if(!window.JSZip){$('st').textContent='ZIP library could not load. Check your internet connection.';return}
+ const [w,h]=$('sz').value.split('x').map(Number),z=new JSZip(),man=[['channel','file','matched_name','source','logo_url']],bad=[];let done=0,i=0;
+ const q=s=>'"'+String(s).replace(/"/g,'""')+'"',used=new Set();
+ const work=async()=>{while(i<list.length){
+  const o=list[i++];
+  try{
+   const b=await toPng(o.c.u,w,h);let fn=o.r.name.replace(/[\\/:*?"<>|]+/g,'').trim()||'channel';while(used.has(fn.toLowerCase()))fn+='_';used.add(fn.toLowerCase());
+   z.file(fn+'.png',b);man.push([o.r.name,fn+'.png',o.c.n,o.c.s,o.c.u]);
+  }catch{bad.push(o.r.name)}
+  $('st').textContent=`Rendering ${++done} of ${list.length}…`;
+ }};
+ await Promise.all(Array.from({length:6},work));
+ R.filter(r=>!list.some(o=>o.r===r)).forEach(r=>man.push([r.name,'','NOT FOUND','','']));
+ z.file('manifest.csv',man.map(r=>r.map(q).join(',')).join('\n'));
+ const blob=await z.generateAsync({type:'blob'}),a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);a.download=`CHQ-logos-${w}x${h}.zip`;a.click();
+ $('st').textContent=`ZIP saved: ${list.length-bad.length} logos at ${w}×${h}.`+(bad.length?` ${bad.length} could not be downloaded: ${bad.slice(0,6).join(', ')}${bad.length>6?'…':''}`:'')+' Channels without a match are listed in manifest.csv.';
+};
+</script></body></html>
