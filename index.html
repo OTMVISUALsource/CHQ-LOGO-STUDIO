@@ -21,7 +21,7 @@ button:focus-visible,select:focus-visible{outline:2px solid var(--ac)}
 .go{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:700}
 .sp{flex:1}
 #st{color:#fff;text-shadow:0 1px 3px #0008;margin:14px 2px;min-height:22px}
-#done{margin-bottom:14px}#done a{text-decoration:none;display:inline-block}#done details{margin-top:10px}#done summary{cursor:pointer}
+#done{margin-bottom:14px}#done a{text-decoration:none;display:inline-flex}#done details{margin-top:10px}#done summary{cursor:pointer}
 #bar{display:none;margin-top:6px}
 .chips{display:flex;gap:8px;flex-wrap:wrap}
 .chip{padding:6px 12px;border-radius:99px;font-size:13px}
@@ -35,27 +35,57 @@ button:focus-visible,select:focus-visible{outline:2px solid var(--ac)}
 .k-ok{color:var(--ok)}.k-review{color:var(--rv)}.k-none{color:var(--no)}
 .opts{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}.op{flex:0 0 auto;width:56px;padding:3px;border-radius:6px;font-size:10px;line-height:1.2;text-align:center;color:var(--mu)}.op img{width:100%;height:52px;object-fit:contain;background:#fff1;border-radius:4px;display:block}.op.on{border-color:var(--ac);outline:2px solid var(--ac)}
 .c select{padding:6px;font-size:12px;width:100%}
+.ic{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;margin-right:8px;flex:none}
+button,.fb{display:inline-flex;align-items:center}
+.tabs{display:flex;gap:8px;margin-bottom:12px}
+.tab{flex:1;justify-content:center;padding:12px}
+.tab span{margin-left:8px;padding:1px 9px;border-radius:99px;background:#ffffff22;font-size:12px}
+.tab.on{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:700}
+.tip{grid-column:1/-1;margin:0;padding:12px 14px;display:flex;align-items:center;background:#1e1e21f2;border:1px solid var(--ln);border-radius:10px;color:#dfe5ee}
+.m{display:flex;align-items:flex-start}.m .ic{width:14px;height:14px;margin-right:5px;margin-top:2px}
+.lg.empty{border:1.5px dashed #4a4f58;flex-direction:column;gap:8px;color:var(--mu);font-size:11px;text-align:center;padding:6px}
+.lg.empty .ic{width:30px;height:30px;margin:0;stroke-width:1.4}
+.c.drag{outline:2px solid var(--ac);background:#2f74e61f}
+.upb{width:100%;justify-content:center;padding:8px;font-size:13px;border-color:var(--ac);color:#d4e3ff}
+.upb .ic{width:16px;height:16px;margin-right:6px}
+.rm{background:none;border:0;color:var(--mu);font-size:12px;padding:2px;justify-content:center}
+.rm .ic{width:14px;height:14px;margin-right:4px}
 </style></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-up" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></symbol>
+<symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol>
+<symbol id="i-file" viewBox="0 0 24 24"><path d="M7 3h7l5 5v12a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"/><circle cx="17" cy="6" r="2.5"/><circle cx="17" cy="18" r="2.5"/><path d="M8.2 10.8l6.6-3.6M8.2 13.2l6.6 3.6"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-4.5 3.5 3 3-2.5 4.5 4"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.2 12.3l2.6 2.6 5-5.4"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4l9 15.5H3L12 4z"/><path d="M12 10v4.2M12 17v.2"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9 9l6 6M15 9l-6 6"/></symbol>
+<symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.2"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V4.5h4V7M7 7l1 12h8l1-12"/></symbol>
+</defs></svg>
+<input id="upf" type="file" accept="image/*" hidden>
 <div class="brand"><span class="orb" aria-hidden="true">CHQ</span><h1>Logo Studio</h1></div>
 <p class="sub">Drop your channel list. Get every matching logo in one ZIP, already sized.</p>
 
 <div class="box">
 <textarea id="in" placeholder="Paste your channels here, one per line or separated by commas&#10;&#10;ESPN USA, Sky Sports Main Event UK, Canal+ Sport France, TF1 France"></textarea>
 <div class="row">
-<button class="go" id="run">Find logos</button>
-<label class="fb">Load playlist (.m3u)<input id="f" type="file" accept=".m3u,.m3u8,.txt" hidden></label>
+<button class="go" id="run"><svg class="ic"><use href="#i-search"/></svg>Find logos</button>
+<label class="fb"><svg class="ic"><use href="#i-file"/></svg>Load playlist (.m3u)<input id="f" type="file" accept=".m3u,.m3u8,.txt" hidden></label>
 </div>
 </div>
 <div id="st"></div>
 <div id="done"></div>
 
 <div id="bar" class="box">
+<div class="tabs" id="tabs"></div>
 <div class="row" style="margin-top:0">
 <div class="chips" id="chips"></div><span class="sp"></span>
 <select id="sz" aria-label="Image size"><option value="150x300">150 × 300</option><option value="300x600" selected>300 × 600</option><option value="450x900">450 × 900</option><option value="600x1200">600 × 1200</option></select>
 <label class="fb"><input type="checkbox" id="bg"> White background</label>
-<button class="fb" id="deep">Deep search missing</button>
-<button class="go" id="zip">Download ZIP</button>
+<button class="fb" id="deep"><svg class="ic"><use href="#i-search"/></svg>Deep search missing</button>
+<button class="go" id="zip"><svg class="ic"><use href="#i-down"/></svg>Download ZIP</button>
 </div>
 </div>
 <div id="grid"></div>
@@ -139,23 +169,33 @@ function parseList(txt){
  }
  const seen=new Set();return items.filter(i=>{const k=i.name.toLowerCase();if(seen.has(k))return false;seen.add(k);return true});
 }
-const cur=r=>r.pick?r.pick:r.logo?{u:r.logo,n:'Logo from your playlist',s:'playlist'}:(r.cands[r.sel]?r.cands[r.sel].c:null);
+const cur=r=>r.up?r.up:r.pick?r.pick:r.logo?{u:r.logo,n:'Logo from your playlist',s:'playlist'}:(r.cands[r.sel]?r.cands[r.sel].c:null);
 function kind(r){
- if(r.logo||r.chosen||r.pick)return'ok';
+ if(r.up||r.logo||r.chosen||r.pick)return'ok';
  const t=r.cands[0];if(!t)return'none';
  return t.s>=.85?'ok':t.s>=.6?'review':'none';
 }
 const LBL={ok:'Matched',review:'Check this match',none:'No confident match'};
+const ic=n=>`<svg class="ic"><use href="#i-${n}"/></svg>`,KI={ok:'check',review:'alert',none:'x'};
+let tab='all';
 function render(){
  const cnt={all:R.length,ok:0,review:0,none:0};R.forEach(r=>cnt[kind(r)]++);
+ $('tabs').innerHTML=`<button class="tab${tab==='all'?' on':''}" data-t="all">${ic('grid')}All channels<span>${R.length}</span></button><button class="tab${tab==='need'?' on':''}" data-t="need">${ic('alert')}Needs attention<span>${cnt.review+cnt.none}</span></button>`;
+ $('chips').style.display=tab==='all'?'flex':'none';
  $('chips').innerHTML=[['all','All'],['ok','Matched'],['review','Check'],['none','Missing']].map(([k,l])=>`<button class="chip${flt===k?' on':''}" data-f="${k}">${l} ${cnt[k]}</button>`).join('');
- $('grid').innerHTML=R.map((r,i)=>({r,i,k:kind(r)})).filter(o=>flt==='all'||o.k===flt).map(({r,i,k})=>{
-  const c=cur(r),pick=!r.logo&&r.cands.length&&k!=='ok'||(!r.logo&&r.chosen);
-  const sel=(!r.logo&&r.cands.length>1||(!r.logo&&k!=='ok'&&r.cands.length))?`<select data-i="${i}" aria-label="Choose logo">${(k==='none'&&!r.chosen?'<option value="-1">Pick a logo…</option>':'')}${r.cands.map((o,j)=>`<option value="${j}"${j===r.sel&&(k!=='none'||r.chosen)?' selected':''}>${esc(o.c.n)} (${o.c.s})</option>`).join('')}</select>`:'';
+ const rows=R.map((r,i)=>({r,i,k:kind(r)})).filter(o=>tab==='need'?(o.k!=='ok'||o.r.touched):(flt==='all'||o.k===flt));
+ let html=tab==='need'?`<p class="tip">${ic('up')}Upload your own logo for any channel below (PNG, JPG, SVG or WebP), or drop an image onto its card. It is resized to match the rest of your files.</p>`:'';
+ if(!rows.length)html+=`<p class="tip">${ic('check')}${tab==='need'?'Every channel has a logo.':'Nothing to show here.'}</p>`;
+ html+=rows.map(({r,i,k})=>{
+  const c=cur(r);
+  const sel=(!r.logo&&!r.up&&r.cands.length>1||(!r.logo&&!r.up&&k!=='ok'&&r.cands.length))?`<select data-i="${i}" aria-label="Choose logo">${(k==='none'&&!r.chosen?'<option value="-1">Pick a logo…</option>':'')}${r.cands.map((o,j)=>`<option value="${j}"${j===r.sel&&(k!=='none'||r.chosen)?' selected':''}>${esc(o.c.n)} (${o.c.s})</option>`).join('')}</select>`:'';
   const show=c&&(k!=='none'||r.chosen);
-  const opts=r.deep&&r.deep.length&&!r.logo?'<div class="opts">'+r.deep.map((o,j)=>`<button class="op${r.pick&&r.pick.u===o.u?' on':''}" data-i="${i}" data-j="${j}" title="${esc(o.n+' ('+o.s+')')}"><img loading="lazy" referrerpolicy="no-referrer" src="${esc(o.u)}" alt="" onerror="this.parentNode.remove()">${o.t}</button>`).join('')+'</div>':'';
-  return`<div class="c"><div class="lg">${show?`<img loading="lazy" referrerpolicy="no-referrer" src="${esc(c.u)}" alt="" onerror="this.remove()">`:''}</div><div class="n">${esc(r.name)}</div><div class="m k-${k}">${r.chosen?'Your pick':LBL[k]}${show&&!r.logo?': '+esc(c.n):''}</div>${sel}${opts}</div>`;
+  const opts=r.deep&&r.deep.length&&!r.logo&&!r.up?'<div class="opts">'+r.deep.map((o,j)=>`<button class="op${r.pick&&r.pick.u===o.u?' on':''}" data-i="${i}" data-j="${j}" title="${esc(o.n+' ('+o.s+')')}"><img loading="lazy" referrerpolicy="no-referrer" src="${esc(o.u)}" alt="" onerror="this.parentNode.remove()">${o.t}</button>`).join('')+'</div>':'';
+  const frame=show?`<div class="lg"><img loading="lazy" referrerpolicy="no-referrer" src="${esc(c.u)}" alt="" onerror="this.remove()"></div>`:`<div class="lg empty">${ic('image')}No logo yet</div>`;
+  const lab=r.up?'Your upload':r.chosen?'Your pick':LBL[k];
+  return`<div class="c" data-i="${i}">${frame}<div class="n">${esc(r.name)}</div><div class="m k-${k}">${ic(KI[k])}<span>${lab}${show&&!r.logo?': '+esc(c.n):''}</span></div>${sel}${opts}<button class="upb" data-up="${i}">${ic('up')}${show?'Replace logo':'Upload logo'}</button>${r.up?`<button class="rm" data-rm="${i}">${ic('trash')}Remove upload</button>`:''}</div>`;
  }).join('');
+ $('grid').innerHTML=html;
 }
 $('run').onclick=async()=>{
  const items=parseList($('in').value);
@@ -166,7 +206,7 @@ $('run').onclick=async()=>{
  R=items.map(it=>({...it,cands:it.logo?[]:find(P(it.q)),sel:0,chosen:false}));
  const k={ok:0,review:0,none:0};R.forEach(r=>k[kind(r)]++);
  $('st').textContent=`${R.length} channels: ${k.ok} matched, ${k.review} to check, ${k.none} without a confident match.`;
- $('bar').style.display='block';flt='all';render();
+ $('bar').style.display='block';flt='all';tab='all';render();
 };
 $('f').onchange=e=>{const f=e.target.files[0];if(f)f.text().then(t=>{$('in').value=t;$('run').click()})};
 $('chips').onclick=e=>{const b=e.target.closest('[data-f]');if(b){flt=b.dataset.f;render()}};
@@ -181,7 +221,23 @@ async function toPng(u,w,h){
  x.imageSmoothingQuality='high';x.drawImage(im,(w-iw*s)/2,(h-ih*s)/2,iw*s,ih*s);
  return new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(),'image/png'));
 }
-$('grid').onclick=e=>{const b=e.target.closest('.op');if(!b)return;const r=R[b.dataset.i],o=r.deep[b.dataset.j];if(r.pick&&r.pick.u===o.u){r.pick=null;r.chosen=false}else{r.pick={u:o.u,n:o.n,s:o.s};r.chosen=true}render()};
+let upIdx=-1;
+function setUpload(i,f){
+ if(!f)return;
+ if(!/^image\//.test(f.type)){$('st').textContent='That file is not an image. Use PNG, JPG, SVG or WebP.';return}
+ const r=R[i];if(r.up)URL.revokeObjectURL(r.up.u);
+ r.up={u:URL.createObjectURL(f),n:f.name,s:'upload'};r.pick=null;r.touched=true;render();
+ $('st').textContent='Added your image for '+r.name+'. It will be sized to match the rest in the ZIP.';
+}
+$('upf').onchange=e=>{setUpload(upIdx,e.target.files[0]);e.target.value=''};
+$('tabs').onclick=e=>{const b=e.target.closest('[data-t]');if(b){tab=b.dataset.t;render()}};
+$('grid').addEventListener('dragover',e=>{const c=e.target.closest('.c');if(c){e.preventDefault();c.classList.add('drag')}});
+$('grid').addEventListener('dragleave',e=>{const c=e.target.closest('.c');if(c)c.classList.remove('drag')});
+$('grid').addEventListener('drop',e=>{const c=e.target.closest('.c');if(!c)return;e.preventDefault();c.classList.remove('drag');setUpload(+c.dataset.i,e.dataTransfer.files[0])});
+$('grid').onclick=e=>{
+ const u=e.target.closest('[data-up]');if(u){upIdx=+u.dataset.up;$('upf').click();return}
+ const m=e.target.closest('[data-rm]');if(m){const r=R[+m.dataset.rm];URL.revokeObjectURL(r.up.u);r.up=null;render();return}
+ const b=e.target.closest('.op');if(!b)return;const r=R[b.dataset.i],o=r.deep[b.dataset.j];if(r.pick&&r.pick.u===o.u){r.pick=null;r.chosen=false}else{r.pick={u:o.u,n:o.n,s:o.s};r.chosen=true}render()};
 const tier=x=>x>=.85?'Known':x>=.6?'Close':'Possible';
 async function wiki(q){
  const j=await fetch('https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrlimit=8&format=json&origin=*&prop=imageinfo&iiprop=url&iiurlwidth=600&gsrsearch='+encodeURIComponent(q+' logo')).then(r=>r.json());
@@ -200,7 +256,7 @@ $('deep').onclick=async()=>{
   $('st').textContent=`Deep search ${++done} of ${miss.length}…`;
  }};
  await Promise.all(Array.from({length:4},work));
- flt='none';render();
+ flt='none';tab='need';R.forEach(r=>{if(kind(r)!=='ok')r.touched=true});render();
  $('st').textContent=`Found options for ${found} of ${miss.length} missing channels. Tap a logo under a channel to choose it (tap again to undo). Labels: Known and Close are strong name matches, Possible is a loose guess, Wiki is from Wikimedia Commons.`;
  $('grid').scrollIntoView({behavior:'smooth'});
 };
@@ -214,14 +270,14 @@ $('zip').onclick=async()=>{
  const q=s=>'"'+String(s).replace(/"/g,'""')+'"',used=new Set();
  const work=async()=>{while(i<list.length){
   const o=list[i++],r=o.r;
-  const urls=[o.c.u,...(r.logo||r.pick?[]:r.cands.filter((x,j)=>j!==r.sel&&x.s>=.85&&x.c.u!==o.c.u).map(x=>x.c.u))];
+  const urls=[o.c.u,...(r.logo||r.pick||r.up?[]:r.cands.filter((x,j)=>j!==r.sel&&x.s>=.85&&x.c.u!==o.c.u).map(x=>x.c.u))];
   let b=null,used_u=o.c.u;
   for(const u of urls){try{b=await toPng(u,w,h);used_u=u;break}catch{}}
   if(b){
    const folder=CCN[P(r.q).cc||o.c.cc]||'Other';
    const base=r.name.replace(/[\\/:*?"<>|]/g,'-').replace(/[. ]+$/,'')||'channel';let fn=base,k=1;
    while(used.has((folder+'/'+fn).toLowerCase()))fn=base+' ('+(++k)+')';used.add((folder+'/'+fn).toLowerCase());
-   z.file(folder+'/'+fn+'.png',b);man.push([r.name,folder+'/'+fn+'.png',o.c.n,o.c.s,used_u]);added++;
+   z.file(folder+'/'+fn+'.png',b);man.push([r.name,folder+'/'+fn+'.png',o.c.n,o.c.s,o.c.s==='upload'?'(your upload)':used_u]);added++;
   }else skipped.push(r.name);
   $('st').textContent=`Rendering ${++done} of ${list.length}…`;
  }};
@@ -233,7 +289,7 @@ $('zip').onclick=async()=>{
  const blob=await z.generateAsync({type:'blob',compression:'STORE'}),name=`CHQ-logos-${w}x${h}.zip`,url=URL.createObjectURL(blob);
  const f=new File([blob],name,{type:'application/zip'}),canShare=!!(navigator.canShare&&navigator.canShare({files:[f]}));
  $('st').textContent='';
- $('done').innerHTML=`<div class="box"><b>${added} logos ready</b> in ${w}×${h}, sorted into folders by country. Only channels with an image are included.<div class="row"><a class="fb go" href="${url}" download="${esc(name)}">Save ZIP</a>${canShare?'<button id="sh" class="fb">Share ZIP</button>':''}</div>${skipped.length?`<details><summary>${skipped.length} channels left out (no image)</summary><p class="m">${esc(skipped.join(', '))}</p></details>`:''}</div>`;
+ $('done').innerHTML=`<div class="box"><b>${added} logos ready</b> in ${w}×${h}, sorted into folders by country. Only channels with an image are included.<div class="row"><a class="fb go" href="${url}" download="${esc(name)}">${ic('down')}Save ZIP</a>${canShare?`<button id="sh" class="fb">${ic('share')}Share ZIP</button>`:''}</div>${skipped.length?`<details><summary>${skipped.length} channels left out (no image)</summary><p class="m">${esc(skipped.join(', '))}</p></details>`:''}</div>`;
  if(canShare)$('sh').onclick=()=>navigator.share({files:[f],title:name}).catch(()=>{});
  $('done').scrollIntoView({behavior:'smooth',block:'center'});
 };
