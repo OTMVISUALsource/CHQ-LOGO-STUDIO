@@ -20,7 +20,8 @@ button,select,.fb{font:inherit;color:var(--fg);background:var(--bg);border:1px s
 button:focus-visible,select:focus-visible{outline:2px solid var(--ac)}
 .go{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:700}
 .sp{flex:1}
-#st{color:var(--mu);margin:14px 2px;min-height:22px}
+#st{color:#fff;text-shadow:0 1px 3px #0008;margin:14px 2px;min-height:22px}
+#done{margin-bottom:14px}#done a{text-decoration:none;display:inline-block}#done details{margin-top:10px}#done summary{cursor:pointer}
 #bar{display:none;margin-top:6px}
 .chips{display:flex;gap:8px;flex-wrap:wrap}
 .chip{padding:6px 12px;border-radius:99px;font-size:13px}
@@ -32,6 +33,7 @@ button:focus-visible,select:focus-visible{outline:2px solid var(--ac)}
 .n{font-weight:600;font-size:13px;word-break:break-word}
 .m{font-size:12px;color:var(--mu);word-break:break-word}
 .k-ok{color:var(--ok)}.k-review{color:var(--rv)}.k-none{color:var(--no)}
+.opts{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}.op{flex:0 0 auto;width:56px;padding:3px;border-radius:6px;font-size:10px;line-height:1.2;text-align:center;color:var(--mu)}.op img{width:100%;height:52px;object-fit:contain;background:#fff1;border-radius:4px;display:block}.op.on{border-color:var(--ac);outline:2px solid var(--ac)}
 .c select{padding:6px;font-size:12px;width:100%}
 </style></head><body>
 <div class="brand"><span class="orb" aria-hidden="true">CHQ</span><h1>Logo Studio</h1></div>
@@ -45,12 +47,14 @@ button:focus-visible,select:focus-visible{outline:2px solid var(--ac)}
 </div>
 </div>
 <div id="st"></div>
+<div id="done"></div>
 
 <div id="bar" class="box">
 <div class="row" style="margin-top:0">
 <div class="chips" id="chips"></div><span class="sp"></span>
 <select id="sz" aria-label="Image size"><option value="150x300">150 × 300</option><option value="300x600" selected>300 × 600</option><option value="450x900">450 × 900</option><option value="600x1200">600 × 1200</option></select>
 <label class="fb"><input type="checkbox" id="bg"> White background</label>
+<button class="fb" id="deep">Deep search missing</button>
 <button class="go" id="zip">Download ZIP</button>
 </div>
 </div>
@@ -107,33 +111,37 @@ async function loadDB(){
  DB.forEach(c=>c.t.forEach(x=>(TOK[x]=TOK[x]||[]).push(c)));
  $('st').textContent='Libraries ready: '+ok.join(' + ')+' ('+DB.length.toLocaleString()+' logo names).';
 }
-function find(q){
+function find(q,min,max){min=min||.3;max=max||5;
  if(!q.t.length)return[];
  let cand=new Set(),small=q.t.filter(x=>TOK[x]&&TOK[x].length<5000);
  (small.length?small:q.t.filter(x=>TOK[x])).forEach(x=>TOK[x].forEach(c=>cand.add(c)));
- const sc=[];cand.forEach(c=>{const s=score(q,c);if(s>=.3)sc.push({c,s})});
+ const sc=[];cand.forEach(c=>{const s=score(q,c);if(s>=min)sc.push({c,s})});
  sc.sort((a,b)=>b.s-a.s);
  const seen=new Set(),out=[];
- for(const o of sc){if(seen.has(o.c.u))continue;seen.add(o.c.u);out.push(o);if(out.length>=5)break}
+ for(const o of sc){if(seen.has(o.c.u))continue;seen.add(o.c.u);out.push(o);if(out.length>=max)break}
  return out;
 }
 function parseList(txt){
  let items=[];
+ const mk=(name,logo)=>({name,logo:logo||'',q:name.replace(/\([^)]*\)/g,' ').replace(/\s+/g,' ').trim()||name});
  if(txt.includes('#EXTINF')){
-  txt.split('\n').filter(l=>l.startsWith('#EXTINF')).forEach(l=>{const n=l.slice(l.lastIndexOf(',')+1).trim();if(n)items.push({name:n,logo:(l.match(/tvg-logo="([^"]*)"/)||[])[1]||''})});
+  txt.split('\n').filter(l=>l.startsWith('#EXTINF')).forEach(l=>{const n=l.slice(l.lastIndexOf(',')+1).trim();if(n)items.push(mk(n,(l.match(/tvg-logo="([^"]*)"/)||[])[1]))});
  }else{
-  txt.replace(/\([^)]*\)/g,'').split(/[\n,;]+/).forEach(s=>{
-   s=s.replace(/…|\.\.\./g,'').trim();if(!s||/^#{2,}/.test(s))return;
-   const m=s.match(/^(.*?)(\d+)\s*[–-]\s*(\d+)(.*)$/);
-   if(m&&+m[3]>+m[2]&&+m[3]-+m[2]<=30){for(let n=+m[2];n<=+m[3];n++)items.push({name:(m[1]+n+m[4]).replace(/\s+/g,' ').trim(),logo:''})}
-   else items.push({name:s.replace(/\s+/g,' '),logo:''});
+  const parts=[];
+  txt.split(/\n+/).forEach(l=>{let d=0,c='';for(const ch of l){if(ch==='(')d++;if(ch===')')d=Math.max(0,d-1);if((ch===','||ch===';')&&!d){parts.push(c);c=''}else c+=ch}parts.push(c)});
+  parts.forEach(s=>{
+   s=s.replace(/…|\.\.\./g,'').replace(/\((several|[\d,\s–-]*)\)/gi,' ').replace(/\s+/g,' ').trim();
+   if(!s||/^#{2,}/.test(s))return;
+   const base=s.replace(/\([^)]*\)/g,' ').replace(/\s+/g,' ').trim(),m=base.match(/^(.*?)(\d+)\s*[–-]\s*(\d+)(.*)$/);
+   if(m&&+m[3]>+m[2]&&+m[3]-+m[2]<=30){for(let n=+m[2];n<=+m[3];n++)items.push(mk((m[1]+n+m[4]).replace(/\s+/g,' ').trim()))}
+   else items.push(mk(s));
   });
  }
  const seen=new Set();return items.filter(i=>{const k=i.name.toLowerCase();if(seen.has(k))return false;seen.add(k);return true});
 }
-const cur=r=>r.logo?{u:r.logo,n:'Logo from your playlist',s:'playlist'}:(r.cands[r.sel]?r.cands[r.sel].c:null);
+const cur=r=>r.pick?r.pick:r.logo?{u:r.logo,n:'Logo from your playlist',s:'playlist'}:(r.cands[r.sel]?r.cands[r.sel].c:null);
 function kind(r){
- if(r.logo||r.chosen)return'ok';
+ if(r.logo||r.chosen||r.pick)return'ok';
  const t=r.cands[0];if(!t)return'none';
  return t.s>=.85?'ok':t.s>=.6?'review':'none';
 }
@@ -145,7 +153,8 @@ function render(){
   const c=cur(r),pick=!r.logo&&r.cands.length&&k!=='ok'||(!r.logo&&r.chosen);
   const sel=(!r.logo&&r.cands.length>1||(!r.logo&&k!=='ok'&&r.cands.length))?`<select data-i="${i}" aria-label="Choose logo">${(k==='none'&&!r.chosen?'<option value="-1">Pick a logo…</option>':'')}${r.cands.map((o,j)=>`<option value="${j}"${j===r.sel&&(k!=='none'||r.chosen)?' selected':''}>${esc(o.c.n)} (${o.c.s})</option>`).join('')}</select>`:'';
   const show=c&&(k!=='none'||r.chosen);
-  return`<div class="c"><div class="lg">${show?`<img loading="lazy" referrerpolicy="no-referrer" src="${esc(c.u)}" alt="" onerror="this.remove()">`:''}</div><div class="n">${esc(r.name)}</div><div class="m k-${k}">${r.chosen?'Your pick':LBL[k]}${show&&!r.logo?': '+esc(c.n):''}</div>${sel}</div>`;
+  const opts=r.deep&&r.deep.length&&!r.logo?'<div class="opts">'+r.deep.map((o,j)=>`<button class="op${r.pick&&r.pick.u===o.u?' on':''}" data-i="${i}" data-j="${j}" title="${esc(o.n+' ('+o.s+')')}"><img loading="lazy" referrerpolicy="no-referrer" src="${esc(o.u)}" alt="" onerror="this.parentNode.remove()">${o.t}</button>`).join('')+'</div>':'';
+  return`<div class="c"><div class="lg">${show?`<img loading="lazy" referrerpolicy="no-referrer" src="${esc(c.u)}" alt="" onerror="this.remove()">`:''}</div><div class="n">${esc(r.name)}</div><div class="m k-${k}">${r.chosen?'Your pick':LBL[k]}${show&&!r.logo?': '+esc(c.n):''}</div>${sel}${opts}</div>`;
  }).join('');
 }
 $('run').onclick=async()=>{
@@ -154,14 +163,14 @@ $('run').onclick=async()=>{
  try{await loadDB()}catch(e){$('st').textContent=e.message;return}
  $('st').textContent='Matching '+items.length+' channels…';
  await new Promise(r=>setTimeout(r,30));
- R=items.map(it=>({...it,cands:it.logo?[]:find(P(it.name)),sel:0,chosen:false}));
+ R=items.map(it=>({...it,cands:it.logo?[]:find(P(it.q)),sel:0,chosen:false}));
  const k={ok:0,review:0,none:0};R.forEach(r=>k[kind(r)]++);
  $('st').textContent=`${R.length} channels: ${k.ok} matched, ${k.review} to check, ${k.none} without a confident match.`;
  $('bar').style.display='block';flt='all';render();
 };
 $('f').onchange=e=>{const f=e.target.files[0];if(f)f.text().then(t=>{$('in').value=t;$('run').click()})};
 $('chips').onclick=e=>{const b=e.target.closest('[data-f]');if(b){flt=b.dataset.f;render()}};
-$('grid').onchange=e=>{const s=e.target.closest('select');if(!s)return;const v=+s.value;if(v<0)return;const r=R[s.dataset.i];r.sel=v;r.chosen=true;render()};
+$('grid').onchange=e=>{const s=e.target.closest('select');if(!s)return;const v=+s.value;if(v<0)return;const r=R[s.dataset.i];r.sel=v;r.pick=null;r.chosen=true;render()};
 
 const loadImg=u=>new Promise((res,rej)=>{const im=new Image();im.crossOrigin='anonymous';im.referrerPolicy='no-referrer';im.onload=()=>res(im);im.onerror=()=>rej();im.src=u});
 async function toPng(u,w,h){
@@ -172,25 +181,60 @@ async function toPng(u,w,h){
  x.imageSmoothingQuality='high';x.drawImage(im,(w-iw*s)/2,(h-ih*s)/2,iw*s,ih*s);
  return new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(),'image/png'));
 }
+$('grid').onclick=e=>{const b=e.target.closest('.op');if(!b)return;const r=R[b.dataset.i],o=r.deep[b.dataset.j];if(r.pick&&r.pick.u===o.u){r.pick=null;r.chosen=false}else{r.pick={u:o.u,n:o.n,s:o.s};r.chosen=true}render()};
+const tier=x=>x>=.85?'Known':x>=.6?'Close':'Possible';
+async function wiki(q){
+ const j=await fetch('https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrlimit=8&format=json&origin=*&prop=imageinfo&iiprop=url&iiurlwidth=600&gsrsearch='+encodeURIComponent(q+' logo')).then(r=>r.json());
+ const qt=new Set([...P(q).t,'logo']);
+ return Object.values((j.query||{}).pages||{}).filter(p=>p.imageinfo&&/\.(png|svg|jpe?g|webp)$/i.test(p.title)).map(p=>{const n=p.title.replace(/^File:/,'').replace(/\.\w+$/,''),t=P(n).t;let sh=0;t.forEach(x=>qt.has(x)&&sh++);return{u:p.imageinfo[0].thumburl||p.imageinfo[0].url,n,sc:2*sh/((t.length+qt.size)||1)}}).sort((a,b)=>b.sc-a.sc).slice(0,6);
+}
+$('deep').onclick=async()=>{
+ const miss=R.filter(r=>!r.logo&&kind(r)!=='ok');
+ if(!miss.length){$('st').textContent='Nothing is missing. Every channel already has a logo.';return}
+ let i=0,done=0,found=0;
+ const work=async()=>{while(i<miss.length){
+  const r=miss[i++],seen=new Set(),opts=[];
+  find(P(r.q),.12,8).forEach(o=>{if(!seen.has(o.c.u)){seen.add(o.c.u);opts.push({u:o.c.u,n:o.c.n,s:o.c.s,t:tier(o.s)})}});
+  try{(await wiki(r.q)).forEach(w=>{if(!seen.has(w.u)){seen.add(w.u);opts.push({u:w.u,n:w.n,s:'wikimedia',t:'Wiki'})}})}catch{}
+  r.deep=opts;if(opts.length)found++;
+  $('st').textContent=`Deep search ${++done} of ${miss.length}…`;
+ }};
+ await Promise.all(Array.from({length:4},work));
+ flt='none';render();
+ $('st').textContent=`Found options for ${found} of ${miss.length} missing channels. Tap a logo under a channel to choose it (tap again to undo). Labels: Known and Close are strong name matches, Possible is a loose guess, Wiki is from Wikimedia Commons.`;
+ $('grid').scrollIntoView({behavior:'smooth'});
+};
+const CCN={US:'United States',GB:'United Kingdom',FR:'France',DE:'Germany',IT:'Italy',ES:'Spain',PT:'Portugal',PL:'Poland',NL:'Netherlands',DK:'Denmark',SE:'Sweden',NO:'Norway',TR:'Turkey',GR:'Greece',CY:'Cyprus',IL:'Israel',RU:'Russia',RS:'Serbia',HR:'Croatia',BG:'Bulgaria',RO:'Romania',CZ:'Czechia',SK:'Slovakia',CA:'Canada',MX:'Mexico',BR:'Brazil',AR:'Argentina',AE:'UAE',QA:'Qatar',AU:'Australia',NZ:'New Zealand',IN:'India',PK:'Pakistan',BD:'Bangladesh',HU:'Hungary',IE:'Ireland',BA:'Bosnia',MY:'Malaysia',CL:'Chile',UY:'Uruguay',CO:'Colombia',AT:'Austria',CH:'Switzerland',BE:'Belgium',ZA:'South Africa'};
 $('zip').onclick=async()=>{
  const list=R.map(r=>({r,c:cur(r),k:kind(r)})).filter(o=>o.c&&(o.k==='ok'||o.k==='review'));
  if(!list.length){$('st').textContent='No logos to download yet.';return}
  if(!window.JSZip){$('st').textContent='ZIP library could not load. Check your internet connection.';return}
- const [w,h]=$('sz').value.split('x').map(Number),z=new JSZip(),man=[['channel','file','matched_name','source','logo_url']],bad=[];let done=0,i=0;
+ $('done').innerHTML='';
+ const [w,h]=$('sz').value.split('x').map(Number),z=new JSZip(),man=[['channel','file','matched_name','source','logo_url']],skipped=[];let done=0,i=0,added=0;
  const q=s=>'"'+String(s).replace(/"/g,'""')+'"',used=new Set();
  const work=async()=>{while(i<list.length){
-  const o=list[i++];
-  try{
-   const b=await toPng(o.c.u,w,h);let fn=o.r.name.replace(/[\\/:*?"<>|]+/g,'').trim()||'channel';while(used.has(fn.toLowerCase()))fn+='_';used.add(fn.toLowerCase());
-   z.file(fn+'.png',b);man.push([o.r.name,fn+'.png',o.c.n,o.c.s,o.c.u]);
-  }catch{bad.push(o.r.name)}
+  const o=list[i++],r=o.r;
+  const urls=[o.c.u,...(r.logo||r.pick?[]:r.cands.filter((x,j)=>j!==r.sel&&x.s>=.85&&x.c.u!==o.c.u).map(x=>x.c.u))];
+  let b=null,used_u=o.c.u;
+  for(const u of urls){try{b=await toPng(u,w,h);used_u=u;break}catch{}}
+  if(b){
+   const folder=CCN[P(r.q).cc||o.c.cc]||'Other';
+   const base=r.name.replace(/[\\/:*?"<>|]/g,'-').replace(/[. ]+$/,'')||'channel';let fn=base,k=1;
+   while(used.has((folder+'/'+fn).toLowerCase()))fn=base+' ('+(++k)+')';used.add((folder+'/'+fn).toLowerCase());
+   z.file(folder+'/'+fn+'.png',b);man.push([r.name,folder+'/'+fn+'.png',o.c.n,o.c.s,used_u]);added++;
+  }else skipped.push(r.name);
   $('st').textContent=`Rendering ${++done} of ${list.length}…`;
  }};
  await Promise.all(Array.from({length:6},work));
- R.filter(r=>!list.some(o=>o.r===r)).forEach(r=>man.push([r.name,'','NOT FOUND','','']));
+ R.filter(r=>!list.some(o=>o.r===r)).forEach(r=>skipped.push(r.name));
+ if(!added){$('st').textContent='No logo images could be downloaded. Check your connection and try again.';return}
  z.file('manifest.csv',man.map(r=>r.map(q).join(',')).join('\n'));
- const blob=await z.generateAsync({type:'blob'}),a=document.createElement('a');
- a.href=URL.createObjectURL(blob);a.download=`CHQ-logos-${w}x${h}.zip`;a.click();
- $('st').textContent=`ZIP saved: ${list.length-bad.length} logos at ${w}×${h}.`+(bad.length?` ${bad.length} could not be downloaded: ${bad.slice(0,6).join(', ')}${bad.length>6?'…':''}`:'')+' Channels without a match are listed in manifest.csv.';
+ $('st').textContent='Building ZIP…';
+ const blob=await z.generateAsync({type:'blob',compression:'STORE'}),name=`CHQ-logos-${w}x${h}.zip`,url=URL.createObjectURL(blob);
+ const f=new File([blob],name,{type:'application/zip'}),canShare=!!(navigator.canShare&&navigator.canShare({files:[f]}));
+ $('st').textContent='';
+ $('done').innerHTML=`<div class="box"><b>${added} logos ready</b> in ${w}×${h}, sorted into folders by country. Only channels with an image are included.<div class="row"><a class="fb go" href="${url}" download="${esc(name)}">Save ZIP</a>${canShare?'<button id="sh" class="fb">Share ZIP</button>':''}</div>${skipped.length?`<details><summary>${skipped.length} channels left out (no image)</summary><p class="m">${esc(skipped.join(', '))}</p></details>`:''}</div>`;
+ if(canShare)$('sh').onclick=()=>navigator.share({files:[f],title:name}).catch(()=>{});
+ $('done').scrollIntoView({behavior:'smooth',block:'center'});
 };
 </script></body></html>
