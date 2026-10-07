@@ -61,6 +61,8 @@ button,.fb{display:inline-flex;align-items:center}
 .srow{display:flex;align-items:center;gap:8px}.srow input[type=range]{flex:1;min-width:0;accent-color:var(--ac)}.srow span{min-width:42px;text-align:right;font-size:13px}
 .chk{display:flex;align-items:center;gap:8px;font-size:14px}
 .tab{padding:11px 6px!important;font-size:13px}.tab .ic{margin-right:5px}
+.acc{width:100%;justify-content:center;padding:9px;font-size:13px;font-weight:700;background:#16a34a;border-color:#16a34a;color:#fff}
+.acc .ic{width:17px;height:17px;margin-right:6px;stroke-width:2.2}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></symbol>
@@ -182,13 +184,13 @@ function parseList(txt){
 }
 const cur=r=>r.up?r.up:r.pick?r.pick:r.logo?{u:r.logo,n:'Logo from your playlist',s:'playlist'}:(r.cands[r.sel]?r.cands[r.sel].c:null);
 function kind(r){
- if(r.up||r.logo||r.chosen||r.pick)return'ok';
+ if(r.up||r.logo||r.chosen||r.pick||r.accepted)return'ok';
  const t=r.cands[0];if(!t)return'none';
  return t.s>=.85?'ok':t.s>=.6?'review':'none';
 }
 const LBL={ok:'Matched',review:'Check this match',none:'No confident match'};
 const ic=n=>`<svg class="ic"><use href="#i-${n}"/></svg>`,KI={ok:'check',review:'alert',none:'x'};
-let tab='all',sub='todo',sf='all',GS=1,WO=false;
+let tab='all',sub='none',sf='all',GS=1,WO=false;
 const hasImg=r=>!!cur(r)&&kind(r)!=='none';
 const eff=r=>r.scale!=null?r.scale:(GS<1&&(!WO||(r.ar||0)>=2)?GS:1);
 const A=(i,im)=>{const r=R[i];if(!r)return;r.ar=(im.naturalWidth/im.naturalHeight)||1;im.style.transform=`scale(${eff(r)})`};
@@ -200,8 +202,8 @@ function cardHtml(r,i,k){
  const sel=(!r.logo&&!r.up&&r.cands.length>1||(!r.logo&&!r.up&&k!=='ok'&&r.cands.length))?`<select data-i="${i}" aria-label="Choose logo">${(k==='none'&&!r.chosen?'<option value="-1">Pick a logo…</option>':'')}${r.cands.map((o,j)=>`<option value="${j}"${j===r.sel&&(k!=='none'||r.chosen)?' selected':''}>${esc(o.c.n)} (${o.c.s})</option>`).join('')}</select>`:'';
  const show=c&&(k!=='none'||r.chosen);
  const opts=r.deep&&r.deep.length&&!r.logo&&!r.up?'<div class="opts">'+r.deep.map((o,j)=>`<button class="op${r.pick&&r.pick.u===o.u?' on':''}" data-i="${i}" data-j="${j}" title="${esc(o.n+' ('+o.s+')')}"><img loading="lazy" referrerpolicy="no-referrer" src="${esc(o.u)}" alt="" onerror="this.parentNode.remove()">${o.t}</button>`).join('')+'</div>':'';
- const lab=r.up?'Your upload':r.chosen?'Your pick':LBL[k];
- return`<div class="c" data-i="${i}">${frameHtml(r,i,show,c)}<div class="n">${esc(r.name)}</div><div class="m k-${k}">${ic(KI[k])}<span>${lab}${show&&!r.logo?': '+esc(c.n):''}</span></div>${sel}${opts}<button class="upb" data-up="${i}">${ic('up')}${show?'Replace logo':'Upload logo'}</button>${r.up?`<button class="rm" data-rm="${i}">${ic('trash')}Remove upload</button>`:''}</div>`;
+ const lab=r.up?'Your upload':r.chosen?'Your pick':r.accepted?'Confirmed match':LBL[k];
+ return`<div class="c" data-i="${i}">${frameHtml(r,i,show,c)}<div class="n">${esc(r.name)}</div><div class="m k-${k}">${ic(KI[k])}<span>${lab}${show&&!r.logo?': '+esc(c.n):''}</span></div>${sel}${opts}${k==='review'?`<button class="acc" data-acc="${i}">${ic('check')}Confirm match</button>`:''}<button class="upb" data-up="${i}">${ic('up')}${show?'Replace logo':'Upload logo'}</button>${r.up?`<button class="rm" data-rm="${i}">${ic('trash')}Remove upload</button>`:''}${r.accepted&&!r.up&&!r.chosen&&!r.pick?`<button class="rm" data-undo="${i}">${ic('x')}Undo confirm</button>`:''}</div>`;
 }
 const tip=(i,t)=>`<p class="tip">${ic(i)}${t}</p>`;
 function render(){
@@ -213,12 +215,14 @@ function render(){
  $('zip').innerHTML=ic('down')+(tab==='need'?`Download updated ZIP (${done.length})`:'Download ZIP');
  let html='';
  if(tab==='need'){
+  const none=todo.filter(r=>kind(r)==='none'),rev=todo.filter(r=>kind(r)==='review');
   const tot=need.length,pct=tot?Math.round(done.length/tot*100):0;
   html+=`<div class="tip stat"><div class="nums"><span><b>${done.length}</b>updated</span><span><b>${todo.length}</b>left to fix</span><span><b>${tot}</b>total</span></div><div class="pbar"><i style="width:${pct}%"></i></div></div>`;
-  html+=`<div class="subs"><button class="sb${sub==='todo'?' on':''}" data-s="todo">${ic('alert')}To fix<span>${todo.length}</span></button><button class="sb${sub==='done'?' on':''}" data-s="done">${ic('check')}Updated<span>${done.length}</span></button></div>`;
-  const rows=sub==='todo'?todo:done;
-  if(sub==='todo'&&rows.length)html+=tip('up','Upload your own logo for any channel below (PNG, JPG, SVG or WebP), or drop an image onto its card. Fixed channels move to the Updated list and into the updated ZIP.');
-  if(!rows.length)html+=sub==='todo'?tip('check','Everything is fixed. Nothing left to fix.'):tip('image','Nothing updated yet. Upload or pick a logo on the To fix list and it will appear here.');
+  html+=`<div class="subs">${[['none','x','No confident match',none.length],['review','alert','Check this match',rev.length],['done','check','Updated',done.length]].map(([k,i,l,n])=>`<button class="sb${sub===k?' on':''}" data-s="${k}">${ic(i)}${l}<span>${n}</span></button>`).join('')}</div>`;
+  const rows=sub==='none'?none:sub==='review'?rev:done;
+  if(sub==='none'&&rows.length)html+=tip('up','No logo was found for these. Upload your own (PNG, JPG, SVG or WebP), drop an image onto the card, or pick a deep-search option.');
+  if(sub==='review'&&rows.length)html+=tip('check','A logo was suggested for these. If it is right, tap the green Confirm match button. If not, choose another option or upload your own.');
+  if(!rows.length)html+=sub==='none'?tip('check','No channels without a match are left.'):sub==='review'?tip('check','No matches left to check.'):tip('image','Nothing updated yet. Fixed channels will appear here.');
   html+=rows.map(r=>cardHtml(r,R.indexOf(r),kind(r))).join('');
  }else if(tab==='scale'){
   const all=R.map((r,i)=>({r,i})).filter(o=>hasImg(o.r));
@@ -251,7 +255,7 @@ $('run').onclick=async()=>{
  R.forEach(r=>r.need=kind(r)!=='ok');
  const k={ok:0,review:0,none:0};R.forEach(r=>k[kind(r)]++);
  $('st').textContent=`${R.length} channels: ${k.ok} matched, ${k.review} to check, ${k.none} without a confident match.`;
- $('bar').style.display='block';flt='all';tab='all';sub='todo';sf='all';render();
+ $('bar').style.display='block';flt='all';tab='all';sub='none';sf='all';render();
 };
 $('f').onchange=e=>{const f=e.target.files[0];if(f)f.text().then(t=>{$('in').value=t;$('run').click()})};
 $('chips').onclick=e=>{const b=e.target.closest('[data-f]');if(b){flt=b.dataset.f;render()}};
@@ -286,6 +290,8 @@ $('grid').addEventListener('dragleave',e=>{const c=e.target.closest('.c');if(c)c
 $('grid').addEventListener('drop',e=>{const c=e.target.closest('.c');if(!c)return;e.preventDefault();c.classList.remove('drag');setUpload(+c.dataset.i,e.dataTransfer.files[0])});
 $('grid').onclick=e=>{
  const u=e.target.closest('[data-up]');if(u){upIdx=+u.dataset.up;$('upf').click();return}
+ const ac=e.target.closest('[data-acc]');if(ac){const r=R[+ac.dataset.acc];r.accepted=true;render();$('st').textContent='Confirmed '+r.name+'. '+R.filter(x=>x.need&&kind(x)!=='ok').length+' left to fix.';return}
+ const un=e.target.closest('[data-undo]');if(un){R[+un.dataset.undo].accepted=false;render();return}
  const sb=e.target.closest('[data-s]');if(sb){sub=sb.dataset.s;render();return}
  const sfb=e.target.closest('[data-sf]');if(sfb){sf=sfb.dataset.sf;render();return}
  const gr=e.target.closest('[data-gsr]');if(gr){GS=1;WO=false;R.forEach(r=>{delete r.scale});render();return}
